@@ -60,15 +60,15 @@ This repository refines the timestamps of openAI's Whisper model via forced alig
 <h2 align="left" id="setup">Setup ⚙️</h2>
 Install this package using
 
-`pip install git+https://github.com/m-bain/whisperx.git`
+`pip install git+https://github.com/koldbrandt/whisperX.git`
 
 If already installed, update package to most recent commit
 
-`pip install git+https://github.com/m-bain/whisperx.git --upgrade`
+`pip install git+https://github.com/koldbrandt/whisperX.git --upgrade`
 
 If wishing to modify this package, clone and install in editable mode:
 ```
-$ git clone https://github.com/m-bain/whisperX.git
+$ git clone https://github.com/koldbrandt/whisperX.git
 $ cd whisperX
 $ pip install -e .
 ```
