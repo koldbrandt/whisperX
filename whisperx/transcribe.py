@@ -468,8 +468,10 @@ def transcribe_with_vad_parallel(
                 
                 if (not needs_fallback or t == temperatures[-1]) and decode_results_done[real_id] is None:
                     decode_results_done[real_id] = result
-                    # removing segments that are already decoded
+
                     remove_list.append(real_id)
+                    if len(remove_list) == segments.shape[0]: # all segments are done
+                        break
 
         return decode_results_done
 
