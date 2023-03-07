@@ -446,7 +446,7 @@ def transcribe_with_vad_parallel(
 
         remove_list = []
         for t in temperatures:
-            segments_to_copy = [x for x in range(segments.shape[0]) if decode_results_done[x] is None]
+            segments_to_copy = [x for x in range(segments.shape[0]) if x not in remove_list]
             if len(segments_to_copy) == 0:
                 break
             segments_copy = torch.stack([segments[x] for x in segments_to_copy])
@@ -461,8 +461,9 @@ def transcribe_with_vad_parallel(
                 kwargs.pop("best_of", None)
             options = DecodingOptions(**kwargs, temperature=t)
             decode_results = model.decode(segments_copy, options)
+            remove_list_copy = remove_list.copy()
             for i, result in enumerate(decode_results):
-                real_id = i + len([x for x in remove_list if x < i])
+                real_id = i + len([x for x in remove_list_copy if x < i])
                 needs_fallback = False
                 if compression_ratio_threshold is not None and result.compression_ratio > compression_ratio_threshold:
                     needs_fallback = True
