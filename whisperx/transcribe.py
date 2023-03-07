@@ -446,7 +446,10 @@ def transcribe_with_vad_parallel(
 
         remove_list = []
         for t in temperatures:
-            segments_copy = torch.stack([x for x in range(segments.shape[0]) if decode_results_done[x] is not None])
+            segments_to_copy = [x for x in range(segments.shape[0]) if decode_results_done[x] is None]
+            if len(segments_to_copy) == 0:
+                break
+            segments_copy = torch.stack([segments[x] for x in segments_to_copy])
 
             kwargs = {**decode_options}
             if t > 0:
