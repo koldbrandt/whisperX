@@ -489,6 +489,7 @@ def transcribe_with_vad_parallel(
     task = decode_options["task"]
     tokenizer = get_tokenizer(model.is_multilingual, language=language, task=task)
 
+    return decode_result_fallback
     # return decode_result_fallback , decode_result_no_fallback
     output = post_process_results(
         vad_segments,
