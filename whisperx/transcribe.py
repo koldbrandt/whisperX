@@ -384,9 +384,13 @@ def transcribe_with_vad_parallel(
     audio: Union[str, np.ndarray, torch.Tensor],
     vad_pipeline,
     mel = None,
+    temperature : Union[float, Tuple[float, ...]] = (0.0, 0.2, 0.4, 0.6, 0.8, 1.0),
+    compression_ratio_threshold: Optional[float] = 2.4,
+    logprob_threshold: Optional[float] = -1.0,
+    no_speech_threshold: Optional[float] = 0.6,
     verbose: Optional[bool] = None,
     batch_size = -1,
-    **kwargs
+    **decode_options,
 ):
     """
     Transcribe per VAD segment
@@ -421,27 +425,53 @@ def transcribe_with_vad_parallel(
     # result_list2 = model.decode(mel_chunk, decode_options1)
 
     # prepare DecodingOptions
-    temperatures = kwargs.pop("temperature", None)
-    compression_ratio_threshold = kwargs.pop("compression_ratio_threshold", None)
-    logprob_threshold = kwargs.pop("logprob_threshold", None)
-    no_speech_threshold = kwargs.pop("no_speech_threshold", None)
-    condition_on_previous_text = kwargs.pop("condition_on_previous_text", None)
-    initial_prompt = kwargs.pop("initial_prompt", None)
+    # temperatures = kwargs.pop("temperature", None)
+    # condition_on_previous_text = kwargs.pop("condition_on_previous_text", None)
+    # initial_prompt = kwargs.pop("initial_prompt", None)
     
-    t = 0  # TODO: does not upport temperature sweeping
-    if t > 0:
-        # disable beam_size and patience when t > 0
-        kwargs.pop("beam_size", None)
-        kwargs.pop("patience", None)
-    else:
-        # disable best_of when t == 0
-        kwargs.pop("best_of", None)
+    # t = 0  # TODO: does not upport temperature sweeping
+    # if t > 0:
+    #     # disable beam_size and patience when t > 0
+    #     kwargs.pop("beam_size", None)
+    #     kwargs.pop("patience", None)
+    # else:
+    #     # disable best_of when t == 0
+    #     kwargs.pop("best_of", None)
+    
+    def decode_with_fallback(segments : Union[torch.tensor , torch.stack]) -> Union[DecodingResult, List[DecodingResult]]:
+        temperatures = [temperature] if isinstance(temperature, (int, float)) else temperature
 
-    options = DecodingOptions(**kwargs, temperature=t)
+        decode_results = [None]* segments.shape[0]
+
+        for t in temperatures:
+            kwargs = {**decode_options}
+            if t > 0:
+                # disable beam_size and patience when t > 0
+                kwargs.pop("beam_size", None)
+                kwargs.pop("patience", None)
+            else:
+                # disable best_of when t == 0
+                kwargs.pop("best_of", None)
+            options = DecodingOptions(**kwargs, temperature=t)
+            decode_results = model.decode(segments, options)
+            for i, decode_result in enumerate(decode_results):
+                needs_fallback = False
+                if compression_ratio_threshold is not None and decode_result.compression_ratio > compression_ratio_threshold:
+                    needs_fallback = True
+                if logprob_threshold is not None and decode_result.logprob < logprob_threshold:
+                    needs_fallback = True
+                
+                if not needs_fallback and decode_results[i] is None:
+                    decode_results[i] = decode_result
+        
+        return decode_results
+
+    # options = DecodingOptions(**kwargs, temperature=t)
     mel_chunk_batches = torch.split(mel_chunk, split_size_or_sections=batch_size)
     decode_result = []
     for mel_chunk_batch in mel_chunk_batches:
-        decode_result.extend(model.decode(mel_chunk_batch, options))
+        decode_result.extend(decode_with_fallback(mel_chunk_batch))
+        # decode_result.extend(model.decode(mel_chunk_batch, options))
     
     ##############################
     ### END of parallelization ###
