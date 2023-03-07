@@ -470,13 +470,16 @@ def transcribe_with_vad_parallel(
                 if logprob_threshold is not None and result.avg_logprob < logprob_threshold:
                     needs_fallback = True
                 
-                if (not needs_fallback or t == temperatures[-1]) and decode_results_done[real_id] is None:
+                if (not needs_fallback) and decode_results_done[real_id] is None:
                     decode_results_done[real_id] = result
 
                     remove_list.append(real_id)
                     if len(remove_list) == segments.shape[0]: # all segments are done
                         break
+                if t == temperatures[-1] and decode_results_done[real_id] is None:
+                    decode_results_done[real_id] = result
 
+        
         return decode_results_done
 
     # options = DecodingOptions(**kwargs, temperature=t)
