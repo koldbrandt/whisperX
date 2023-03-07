@@ -443,7 +443,11 @@ def transcribe_with_vad_parallel(
 
         decode_results_done = [None]* segments.shape[0]
 
+
+        remove_list = []
         for t in temperatures:
+            # copy elements from segments that are not in remove_list
+            segments = torch.stack([segments[i] for i in range(segments.shape[0]) if i not in remove_list], dim=0)
             kwargs = {**decode_options}
             if t > 0:
                 # disable beam_size and patience when t > 0
@@ -455,19 +459,17 @@ def transcribe_with_vad_parallel(
             options = DecodingOptions(**kwargs, temperature=t)
             decode_results = model.decode(segments, options)
             for i, result in enumerate(decode_results):
+                real_id = i + len([x for x in remove_list if x < i])
                 needs_fallback = False
                 if compression_ratio_threshold is not None and result.compression_ratio > compression_ratio_threshold:
                     needs_fallback = True
                 if logprob_threshold is not None and result.avg_logprob < logprob_threshold:
                     needs_fallback = True
                 
-                if not needs_fallback and decode_results_done[i] is None:
-                    decode_results_done[i] = result
-        
-        # using the larget temperature if no result is found
-        for i, result in enumerate(decode_results_done):
-            if result is None:
-                decode_results_done[i] = decode_results[0]
+                if (not needs_fallback or t == temperatures[-1]) and decode_results_done[real_id] is None:
+                    decode_results_done[real_id] = result
+                    # removing segments that are already decoded
+                    remove_list.append(real_id)
 
         return decode_results_done
 
