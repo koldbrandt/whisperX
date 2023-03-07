@@ -462,7 +462,7 @@ def transcribe_with_vad_parallel(
                     needs_fallback = True
                 
                 if not needs_fallback and decode_results_done[i] is None:
-                    decode_results_done[i] = decode_result
+                    decode_results_done[i] = result
         
         return decode_results_done
 
@@ -473,6 +473,7 @@ def transcribe_with_vad_parallel(
     for mel_chunk_batch in mel_chunk_batches:
         decode_result_fallback.extend(decode_with_fallback(mel_chunk_batch))
         decode_result_no_fallback.extend(model.decode(mel_chunk_batch, decode_options))
+        break
         # decode_result.extend(model.decode(mel_chunk_batch, options))
     
     ##############################
