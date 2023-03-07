@@ -441,7 +441,7 @@ def transcribe_with_vad_parallel(
     def decode_with_fallback(segments : Union[torch.tensor , torch.stack]) -> Union[DecodingResult, List[DecodingResult]]:
         temperatures = [temperature] if isinstance(temperature, (int, float)) else temperature
 
-        decode_results = [None]* segments.shape[0]
+        decode_results_done = [None]* segments.shape[0]
 
         for t in temperatures:
             kwargs = {**decode_options}
@@ -454,17 +454,17 @@ def transcribe_with_vad_parallel(
                 kwargs.pop("best_of", None)
             options = DecodingOptions(**kwargs, temperature=t)
             decode_results = model.decode(segments, options)
-            for i, decode_result in enumerate(decode_results):
+            for i  in range(decode_results):
                 needs_fallback = False
-                if compression_ratio_threshold is not None and decode_result.compression_ratio > compression_ratio_threshold:
+                if compression_ratio_threshold is not None and decode_results[i].compression_ratio > compression_ratio_threshold:
                     needs_fallback = True
-                if logprob_threshold is not None and decode_result.logprob < logprob_threshold:
+                if logprob_threshold is not None and decode_results[i].logprob < logprob_threshold:
                     needs_fallback = True
                 
-                if not needs_fallback and decode_results[i] is None:
-                    decode_results[i] = decode_result
+                if not needs_fallback and decode_results_done[i] is None:
+                    decode_results_done[i] = decode_result
         
-        return decode_results
+        return decode_results_done
 
     # options = DecodingOptions(**kwargs, temperature=t)
     mel_chunk_batches = torch.split(mel_chunk, split_size_or_sections=batch_size)
