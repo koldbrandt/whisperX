@@ -454,11 +454,11 @@ def transcribe_with_vad_parallel(
                 kwargs.pop("best_of", None)
             options = DecodingOptions(**kwargs, temperature=t)
             decode_results = model.decode(segments, options)
-            for i  in range(decode_results):
+            for i, result in enumerate(decode_results):
                 needs_fallback = False
-                if compression_ratio_threshold is not None and decode_results[i].compression_ratio > compression_ratio_threshold:
+                if compression_ratio_threshold is not None and result.compression_ratio > compression_ratio_threshold:
                     needs_fallback = True
-                if logprob_threshold is not None and decode_results[i].avg_logprob < logprob_threshold:
+                if logprob_threshold is not None and result.avg_logprob < logprob_threshold:
                     needs_fallback = True
                 
                 if not needs_fallback and decode_results_done[i] is None:
