@@ -470,9 +470,10 @@ def transcribe_with_vad_parallel(
     mel_chunk_batches = torch.split(mel_chunk, split_size_or_sections=batch_size)
     decode_result_fallback = []
     decode_result_no_fallback = []
+    options = DecodingOptions(**decode_options)
     for mel_chunk_batch in mel_chunk_batches:
         decode_result_fallback.extend(decode_with_fallback(mel_chunk_batch))
-        decode_result_no_fallback.extend(model.decode(mel_chunk_batch, decode_options))
+        decode_result_no_fallback.extend(model.decode(mel_chunk_batch, options))
         break
         # decode_result.extend(model.decode(mel_chunk_batch, options))
     
