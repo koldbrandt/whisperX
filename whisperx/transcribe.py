@@ -483,7 +483,7 @@ def transcribe_with_vad_parallel(
     for mel_chunk_batch in mel_chunk_batches:
         decode_result_fallback.extend(decode_with_fallback(mel_chunk_batch))
         # decode_result_no_fallback.extend(model.decode(mel_chunk_batch, options))
-        # break
+        break
         # decode_result.extend(model.decode(mel_chunk_batch, options))
     
     ##############################
@@ -498,7 +498,7 @@ def transcribe_with_vad_parallel(
     task = decode_options["task"]
     tokenizer = get_tokenizer(model.is_multilingual, language=language, task=task)
 
-    # return decode_result_fallback
+    return decode_result_fallback
     # return decode_result_fallback , decode_result_no_fallback
     output = post_process_results(
         vad_segments,
