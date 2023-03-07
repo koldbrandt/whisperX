@@ -481,8 +481,8 @@ def transcribe_with_vad_parallel(
     input_stride = exact_div(
         N_FRAMES, model.dims.n_audio_ctx
     )  # mel frames per output token: 2
-    language = kwargs["language"]
-    task = kwargs["task"]
+    language = decode_options["language"]
+    task = decode_options["task"]
     tokenizer = get_tokenizer(model.is_multilingual, language=language, task=task)
 
     output = post_process_results(
