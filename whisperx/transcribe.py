@@ -446,8 +446,8 @@ def transcribe_with_vad_parallel(
 
         remove_list = []
         for t in temperatures:
-            # copy elements from segments that are not in remove_list
-            segments = torch.stack([segments[i] for i in range(segments.shape[0]) if i not in remove_list], dim=0)
+            segments_copy = torch.stack([x for x in range(segments.shape[0]) if decode_results_done[x] is not None])
+
             kwargs = {**decode_options}
             if t > 0:
                 # disable beam_size and patience when t > 0
@@ -457,7 +457,7 @@ def transcribe_with_vad_parallel(
                 # disable best_of when t == 0
                 kwargs.pop("best_of", None)
             options = DecodingOptions(**kwargs, temperature=t)
-            decode_results = model.decode(segments, options)
+            decode_results = model.decode(segments_copy, options)
             for i, result in enumerate(decode_results):
                 real_id = i + len([x for x in remove_list if x < i])
                 needs_fallback = False
