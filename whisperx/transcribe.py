@@ -477,10 +477,6 @@ def transcribe_with_vad_parallel(
                         break
                 if t == temperatures[-1] and decode_results_done[real_id] is None:
                     decode_results_done[real_id] = result
-
-        for i, result in enumerate(decode_results):
-            if decode_results_done[segments_to_copy[i]] is None:
-                decode_results_done[segments_to_copy[i]] = result
         
         return decode_results_done
 
