@@ -458,7 +458,7 @@ def transcribe_with_vad_parallel(
                 needs_fallback = False
                 if compression_ratio_threshold is not None and decode_results[i].compression_ratio > compression_ratio_threshold:
                     needs_fallback = True
-                if logprob_threshold is not None and decode_results[i].logprob < logprob_threshold:
+                if logprob_threshold is not None and decode_results[i].avg_logprob < logprob_threshold:
                     needs_fallback = True
                 
                 if not needs_fallback and decode_results_done[i] is None:
