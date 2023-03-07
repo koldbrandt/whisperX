@@ -461,9 +461,8 @@ def transcribe_with_vad_parallel(
                 kwargs.pop("best_of", None)
             options = DecodingOptions(**kwargs, temperature=t)
             decode_results = model.decode(segments_copy, options)
-            remove_list_copy = remove_list.copy()
             for i, result in enumerate(decode_results):
-                real_id = i + len([x for x in remove_list_copy if x < i])
+                real_id = segments_to_copy[i]
                 needs_fallback = False
                 if compression_ratio_threshold is not None and result.compression_ratio > compression_ratio_threshold:
                     needs_fallback = True
@@ -479,6 +478,9 @@ def transcribe_with_vad_parallel(
                 if t == temperatures[-1] and decode_results_done[real_id] is None:
                     decode_results_done[real_id] = result
 
+        for i, result in enumerate(decode_results):
+            if decode_results_done[segments_to_copy[i]] is None:
+                decode_results_done[segments_to_copy[i]] = result
         
         return decode_results_done
 
