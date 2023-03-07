@@ -464,6 +464,11 @@ def transcribe_with_vad_parallel(
                 if not needs_fallback and decode_results_done[i] is None:
                     decode_results_done[i] = result
         
+        # using the larget temperature if no result is found
+        for i, result in enumerate(decode_results_done):
+            if result is None:
+                decode_results_done[i] = decode_results[0]
+
         return decode_results_done
 
     # options = DecodingOptions(**kwargs, temperature=t)
@@ -489,7 +494,7 @@ def transcribe_with_vad_parallel(
     task = decode_options["task"]
     tokenizer = get_tokenizer(model.is_multilingual, language=language, task=task)
 
-    return decode_result_fallback
+    # return decode_result_fallback
     # return decode_result_fallback , decode_result_no_fallback
     output = post_process_results(
         vad_segments,
@@ -569,6 +574,7 @@ def post_process_results(
             if should_skip:
                 seek += segment_shape  # fast-forward to the next segment boundary
                 continue
+        
         
         timestamp_tokens: torch.Tensor = tokens.ge(tokenizer.timestamp_begin)
         consecutive = torch.where(timestamp_tokens[:-1] & timestamp_tokens[1:])[0].add_(1)
